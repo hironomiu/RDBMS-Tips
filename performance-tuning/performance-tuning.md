@@ -389,10 +389,8 @@ mysql> select count(*) from users;
 
 # RDBMSパフォーマンスチューニング入門 Part2
 
-## Selet文
+## SQL テクニック&Tips
 - Nested Loop Joinの理解
-
-## INDEX テクニック&Tips
 
 - 複数カラムのINDEX作成時の列挙順
 
@@ -402,8 +400,10 @@ mysql> select count(*) from users;
 
 - unionによる複数INDEX
 
+- ヒント句
+
 ## Insert時のボトルネック
-PKの衝突
+- PKの衝突
 
 ## レプリケーション
 ![replication](./images/replication.png)
