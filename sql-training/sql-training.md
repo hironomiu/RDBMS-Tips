@@ -19,9 +19,9 @@ SQL文をパフォーマンス視点で最適なSQL文を導き出せる
 ## 進め方
 このセミナーはライブコーディング形式で進めます。セミナー中は自身でSQLを書く時間はありませんので事前に回答を元にSQLを書いてみるか、ライブコーディング後に書いてみることをおすすめします。
 
-[Step1 回答](https://gist.github.com/hironomiu/803f7d3b26006d4de8082ea452fd74f3)
+[Step1 回答](./step-1-answer.md)
 
-[Step2 回答](https://gist.github.com/hironomiu/2ad43c7b13bf2a0527a525a8e78c622f)
+[Step2 回答](./step-2-answer.md)
 
 ## 事前準備
 MySQLが動作し、SQLが発行できる環境(ライブコーディングの視聴のみでも学べる構成にしてありますが実際に自分でSQLを書く方が学びが多いため推奨)
