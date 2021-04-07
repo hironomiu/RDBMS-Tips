@@ -1,6 +1,7 @@
 {% extends 'normalization/base.html' %} 
 {% block content %}
-<h3>受注情報</h3>
+<h1>RDBMS-Normalization</h1>
+<h2>受注情報</h2>
 <table  border="1" style="border: 1px solid black; border-collapse: collapse;">
   <thead>
     <tr>
@@ -30,7 +31,7 @@
   </tbody>
 </table>
 
-<h4>商品DDL</h4>
+<h3>商品DDL</h3>
 <p>
   CREATE TABLE "items" (</br>
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,</br>
@@ -39,7 +40,7 @@
   "created_at" datetime NOT NULL,</br>
   "updated_at" datetime NOT NULL)
 </p>
-<h4>受注先DDL</h4>
+<h3>受注先DDL</h3>
 <p>
   CREATE TABLE "customers" (</br>
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,</br>
@@ -48,7 +49,7 @@
   "created_at" datetime NOT NULL,</br>
   "updated_at" datetime NOT NULL)
 </p>
-<h4>受注</h4>
+<h3>受注</h3>
 <p>
   CREATE TABLE "orders" (</br>
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,</br>
@@ -57,7 +58,7 @@
   "updated_at" datetime NOT NULL,</br>
   "customer_id" integer NOT NULL REFERENCES "customers" ("id") DEFERRABLE INITIALLY DEFERRED)
 </p>
-<h4>受注明細</h4>
+<h3>受注明細</h3>
 <p>CREATE TABLE "order_details" ( </br>
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,</br>
   "item_quantity" integer NOT NULL,</br>
