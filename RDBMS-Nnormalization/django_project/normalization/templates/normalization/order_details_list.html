@@ -1,0 +1,70 @@
+{% extends 'normalization/base.html' %} 
+{% block content %}
+<h3>受注情報</h3>
+<table  border="1" style="border: 1px solid black; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>受注番号</th>
+      <th>受注日</th>
+      <th>受注先</th>
+      <th>受注先住所</th>
+      <th>商品</th>
+      <th>数量</th>
+      <th>単価</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for order_detail in order_details_list %}
+    <tr>
+      <td>{{order_detail.id}}</td>
+      <td>{{order_detail.order_id}}</td>
+      <td>{{order_detail.order.order_date}}</td>
+      <td>{{order_detail.order.customer}}</td>
+      <td>{{order_detail.order.customer.address}}</td>
+      <td>{{order_detail.item}}</td>
+      <td>{{order_detail.item_quantity}}</td>
+      <td>{{order_detail.item.price}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h4>商品DDL</h4>
+<p>
+  CREATE TABLE "items" (</br>
+  "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,</br>
+  "name" varchar(100) NOT NULL,</br>
+  "price" integer NOT NULL,</br>
+  "created_at" datetime NOT NULL,</br>
+  "updated_at" datetime NOT NULL)
+</p>
+<h4>受注先DDL</h4>
+<p>
+  CREATE TABLE "customers" (</br>
+  "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,</br>
+  "name" varchar(100) NOT NULL,</br>
+  "address" varchar(100) NOT NULL,</br>
+  "created_at" datetime NOT NULL,</br>
+  "updated_at" datetime NOT NULL)
+</p>
+<h4>受注</h4>
+<p>
+  CREATE TABLE "orders" (</br>
+  "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,</br>
+  "order_date" date NOT NULL,</br>
+  "created_at" datetime NOT NULL,</br>
+  "updated_at" datetime NOT NULL,</br>
+  "customer_id" integer NOT NULL REFERENCES "customers" ("id") DEFERRABLE INITIALLY DEFERRED)
+</p>
+<h4>受注明細</h4>
+<p>CREATE TABLE "order_details" ( </br>
+  "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,</br>
+  "item_quantity" integer NOT NULL,</br>
+  "created_at" datetime NOT NULL,</br>
+  "updated_at" datetime NOT NULL,</br>
+  "item_id" integer NOT NULL REFERENCES "items" ("id") DEFERRABLE INITIALLY DEFERRED,</br>
+  "order_id" integer NOT NULL REFERENCES "orders" ("id") DEFERRABLE INITIALLY DEFERRED,</br>
+  CONSTRAINT "order_id_item_id_unique" UNIQUE ("order_id", "item_id"))
+</p>
+{% endblock %}
