@@ -21,3 +21,7 @@ MySQL の rand()とユーザー定義変数を使ったサンプルコード
 ### django_project
 
 正規化ハンズオンで作成したテーブル定義を Django で作成したサンプルコード
+
+## CSV-Column-To-Row
+
+CSV(カンマ区切り)のカラムを行に変換する
