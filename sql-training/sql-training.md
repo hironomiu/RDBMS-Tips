@@ -444,4 +444,13 @@ Q3 の SQL 文を group by 句を用いて同じ結果になる SELECT 文を構
 7 rows in set (0.00 sec)
 ```
 
+### Q13 解答後補足問題
+
+エラーとなる理由を考えてみましょう
+
+```
+mysql> select b.id ,group_concat(a.order_id) as order from order_details a right outer join items b on a.item_id = b.id group by b.id;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'order from order_details a right outer join items b on a.item_id = b.id group by' at line 1
+```
+
 ---
