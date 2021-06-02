@@ -1,8 +1,9 @@
-# SQL実力アップセミナー(Step2 回答)
+# SQL 実力アップセミナー(Step2 回答)
 
 ## Answer
 
 ### A6
+
 ```
 insert into items values
  (null,"タンクトップ",1300,now(),now()),
@@ -10,7 +11,7 @@ insert into items values
  (null,"ソックス",600,now(),now());
 ```
 
-参考(DEFAULT CURRENT_TIMESTAMPの例)
+参考(DEFAULT CURRENT_TIMESTAMP の例)
 
 ```
 CREATE TABLE `items2` (
@@ -29,6 +30,7 @@ insert into items2(name,price) values
 ```
 
 問い合わせ結果
+
 ```
 mysql> select * from items2;
 +----+--------------------+-------+---------------------+---------------------+
@@ -42,9 +44,10 @@ mysql> select * from items2;
 ```
 
 ### A6 解答後補足問題
-今回の回答に至ったinsert文のメリットを考えてみましょう
 
-通常のinsert文の場合1レコードinsertするたびにclientからmysqldが作成したスレッドに要求がされるためレコード数分insert文が発行されるがこのinsertでは1回のinsert文で複数行の挿入が行える。
+今回の回答に至った insert 文のメリットを考えてみましょう
+
+通常の insert 文の場合 1 レコード insert するたびに client から mysqld が作成したスレッドに要求がされるためレコード数分 insert 文が発行されるがこの insert では 1 回の insert 文で複数行の挿入が行える。
 
 ### A7
 
@@ -56,36 +59,44 @@ inner join items d on d.id = c.item_id;
 ```
 
 ```
-select sum(order_details.item_quantity * items.price) as sum_price from orders  
-inner join order_details on orders.id = order_details.order_id  
-inner join items on order_details.item_id = items.id  
+select sum(order_details.item_quantity * items.price) as sum_price from orders
+inner join order_details on orders.id = order_details.order_id
+inner join items on order_details.item_id = items.id
 inner join customers on customers.id = orders.customer_id  where customers.name = "B商会";
 ```
 
 ### A8
+
 #### 駆動票 items
+
 exists
+
 ```
 select a.id,a.name from items a where exists (select * from order_details b where a.id = b.item_id);
 ```
 
 inner join(group by)
+
 ```
 select a.id,a.name from items a inner join order_details b on a.id = b.item_id group by a.id ,a.name;
 ```
 
 inner join(distinct)
+
 ```
 select distinct a.id,a.name from items a inner join order_details b on a.id = b.item_id;
 ```
 
 in
+
 ```
 select a.id,a.name from items a where a.id in ( select b.item_id from order_details b );
 ```
 
 #### 駆動表 order_details
+
 exists
+
 ```
 select distinct(item_id),(select name from items where items.id = item_id) as name from order_details
 where exists(select * from items where item_id = items.id);
@@ -98,36 +109,44 @@ select distinct(item_id),items.name from order_details inner join items on item_
 ```
 
 inner join(group by)
+
 ```
 select a.item_id,b.name from order_details a inner join items b on a.item_id = b.id group by a.item_id,b.name;
 ```
 
 in
+
 ```
-select distinct(item_id),(select name from items 
-where items.id = item_id) as name from order_details 
+select distinct(item_id),(select name from items
+where items.id = item_id) as name from order_details
 where item_id in (select id from items);
 ```
 
 ### A9
+
 #### 駆動票 items
+
 not exists
+
 ```
 select a.id ,a.name from items a where not exists (select * from order_details b where a.id = b.item_id);
 ```
 
 left join
+
 ```
 select a.id ,a.name from items a left outer join order_details b on a.id = b.item_id where b.order_id is null;
 ```
 
 not in
+
 ```
 select a.id ,a.name from items a where a.id not in (select b.item_id from order_details b);
 ```
 
 #### 駆動票 order_details
-例 outer joinにてorder_detailsからは満たせない
+
+例 outer join にて order_details からは満たせない
 
 ```
 mysql> select a.item_id ,(select name from items where id = a.item_id) from order_details a right outer join items b on a.item_id = b.id;
@@ -162,6 +181,20 @@ mysql> select a.item_id ,(select name from items where id = a.item_id) from orde
 7 rows in set (0.00 sec)
 ```
 
+例 outer join にて order_details からは満たせる(上との違いを確認してみましょう)
+
+```
+mysql> select b.id ,(select name from items where id = b.id) from order_details a right outer join items b on a.item_id = b.id where a.order_id is null;
++----+------------------------------------------+
+| id | (select name from items where id = b.id) |
++----+------------------------------------------+
+|  5 | タンクトップ                             |
+|  6 | ジャンパー                               |
+|  7 | ソックス                                 |
++----+------------------------------------------+
+3 rows in set (0.00 sec)
+```
+
 ### A10
 
 ```
@@ -179,7 +212,7 @@ select count(*) as "all_order",
 ### A11
 
 ```
-select b.id , count(a.item_id) count 
+select b.id , count(a.item_id) count
 from order_details a right outer join items b on a.item_id = b.id  group by b.id;
 ```
 
@@ -188,11 +221,12 @@ from order_details a right outer join items b on a.item_id = b.id  group by b.id
 ```
 select "all_order" ,count(*) as count from order_details
 union
-select b.id , count(a.item_id) count 
+select b.id , count(a.item_id) count
 from order_details a right outer join items b on a.item_id = b.id  group by b.id;
 ```
 
 ### A13
+
 ```
 select b.id , group_concat(a.order_id) order_id from order_details a right outer join items b on a.item_id = b.id  group by b.id;
 ```
