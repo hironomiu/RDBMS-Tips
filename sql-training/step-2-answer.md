@@ -230,3 +230,29 @@ from order_details a right outer join items b on a.item_id = b.id  group by b.id
 ```
 select b.id , group_concat(a.order_id) order_id from order_details a right outer join items b on a.item_id = b.id  group by b.id;
 ```
+
+### A13 解答後補足問題
+
+`group_concat(a.order_id) as order`の`order`が予約語なため
+
+```
+mysql> select b.id ,group_concat(a.order_id) as order from order_details a right outer join items b on a.item_id = b.id group by b.id;
+```
+
+元の回答のように`order_id`など予約語以外にするとエラーとならない
+
+```
+mysql> select b.id ,group_concat(a.order_id) as order_id from order_details a right outer join items b on a.item_id = b.id group by b.id;
++----+----------+
+| id | order_id |
++----+----------+
+|  1 | 1,2      |
+|  2 | 1,3      |
+|  3 | 2,4      |
+|  4 | 2        |
+|  5 | NULL     |
+|  6 | NULL     |
+|  7 | NULL     |
++----+----------+
+7 rows in set (0.01 sec)
+```
