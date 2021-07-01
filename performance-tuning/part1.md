@@ -269,19 +269,18 @@ B+treeINDEX の構造は簡単にあらわすと、このような図になり�
 mysql> show create table users;
 
 CREATE TABLE `users` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
   `mail` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `sex` int(11) NOT NULL,
+  `sex` int NOT NULL,
   `birthday` datetime NOT NULL,
   `profile1` text,
   `profile2` text,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=1000008 DEFAULT CHARSET=utf8 |
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1000008 DEFAULT CHARSET=utf8mb3
 
 1 row in set (0.01 sec)
 ```
@@ -296,10 +295,10 @@ mysql> select name from users where mail = "o3xE22lXIlWJCdd@example.com";
 +-----------------+
 | o3xE22lXIlWJCdd |
 +-----------------+
-1 row in set (23.51 sec)
+1 row in set (14.01 sec)
 ```
 
-- explain`rows`に注目しましょう(`rows: 717622`)
+- explain`rows`に注目しましょう(`rows: 716153`)
 
 ```
 mysql> explain select name from users where mail = "o3xE22lXIlWJCdd@example.com"\G
@@ -313,7 +312,7 @@ possible_keys: NULL
           key: NULL
       key_len: NULL
           ref: NULL
-         rows: 717622
+         rows: 716153
      filtered: 10.00
         Extra: Using where
 1 row in set, 1 warning (0.03 sec)
@@ -333,6 +332,7 @@ Records: 0  Duplicates: 0  Warnings: 0
   - Unique INDEX の場合は以下
 
 ```
+mysql> alter table users drop index mail;
 mysql> alter table users add unique index mail(`mail`);
 Query OK, 0 rows affected (31.78 sec)
 Records: 0  Duplicates: 0  Warnings: 0
