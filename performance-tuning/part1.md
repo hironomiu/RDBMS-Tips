@@ -286,7 +286,7 @@ CREATE TABLE `users` (
 ```
 
 - 問題の SQL を実行
-  - `1 row in set (23.51 sec)`に注目
+  - `1 row in set (14.01 sec)`に注目
 
 ```
 mysql> select name from users where mail = "o3xE22lXIlWJCdd@example.com";
