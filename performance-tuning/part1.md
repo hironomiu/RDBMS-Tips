@@ -153,19 +153,45 @@ RDBMS(MySQL)の性能改善に向けたロギング戦略、日々ロギング�
   - 出力可否、出力先(ファイルパス)、閾値(秒)の設定
 
 ```
-/etc/my.cnf
+/etc/mysql/my.cnf
 
 [mysqld]
-slow_query_log=1
-slow_query_log_file=/var/log/mysql/slow.log
+slow_query_log=ON
+slow_query_log_file=/var/lib/mysql/slow.log
 long_query_time=0.1
 ```
 
+```
+mysql> show variables like 'slow_query%';
++---------------------+-------------------------+
+| Variable_name       | Value                   |
++---------------------+-------------------------+
+| slow_query_log      | ON                      |
+| slow_query_log_file | /var/lib/mysql/slow.log |
++---------------------+-------------------------+
+2 rows in set (0.00 sec)
+
+mysql> show variables like 'long%';
++-----------------+----------+
+| Variable_name   | Value    |
++-----------------+----------+
+| long_query_time | 0.100000 |
++-----------------+----------+
+1 row in set (0.00 sec)
+```
+
 - 出力例  
-  ターミナル 1
+  ターミナル 1(ターミナル　 2 で実行した SQL が閾値を超えた場合出力される。ここでは`select count(*) from users;`が実行された SQL が出力されている)
 
 ```
-$ tail -f /var/log/mysql/slow.log
+$ tail -f /var/lib/mysql/slow.log
+
+# Time: 2021-07-06T01:26:51.852561Z
+# User@Host: root[root] @  [172.17.0.1]  Id:     8
+# Query_time: 12.034466  Lock_time: 0.000113 Rows_sent: 1  Rows_examined: 0
+use part1;
+SET timestamp=1625534799;
+select count(*) from users;
 ```
 
 - 出力例  
@@ -174,7 +200,7 @@ $ tail -f /var/log/mysql/slow.log
 ```
 mysql> show create table users;
 mysql> select count(*) from users;
-mysql> select name from users where mail = "o3xE22lXIlWJCdd@example.com";
+mysql> select name from users where email = "o3xE22lXIlWJCdd@example.com";
 ```
 
 - 出力例
@@ -259,8 +285,8 @@ B+treeINDEX の構造は簡単にあらわすと、このような図になり�
   - ディクショナリを用いた算出方法もあるが今回は FS 上のファイルサイズで確認する
 
 ```
-# ll /var/lib/mysql/1day/users.ibd
--rw-r----- 1 mysql mysql 4261412864  7月  3 16:34 /var/lib/mysql/1day/users.ibd
+# ll /var/lib/mysql/part1/users.ibd
+-rw-r----- 1 mysql mysql 4743757824 Jul  6 01:04 /var/lib/mysql/part1/users.ib
 ```
 
 - 確認 テーブル構成
@@ -271,9 +297,8 @@ mysql> show create table users;
 CREATE TABLE `users` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
-  `mail` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `sex` int NOT NULL,
   `birthday` datetime NOT NULL,
   `profile1` text,
   `profile2` text,
@@ -283,6 +308,18 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1000008 DEFAULT CHARSET=utf8mb3
 
 1 row in set (0.01 sec)
+```
+
+- 確認 レコード数(1000006 件)
+
+```
+mysql> select count(*) from users;
++----------+
+| count(*) |
++----------+
+|  1000006 |
++----------+
+1 row in set (12.29 sec)
 ```
 
 - 問題の SQL を実行
