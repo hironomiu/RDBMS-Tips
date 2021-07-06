@@ -89,13 +89,25 @@
 - スローログの設定確認
 
 ```
-vi /etc/my.cnf
+cat /etc/mysql/my.cnf
+
+slow_query_log=ON
+slow_query_log_file=/var/lib/mysql/slow.log
+long_query_time=0.1
+```
+
+`my.cnf`の配置パスは以下で確認可能(今回は MySQL 作成時に存在した`/etc/mysql/my.cnf`に記述)
+
+```
+# mysql --help | grep my.cnf
+                      order of preference, my.cnf, $MYSQL_TCP_PORT,
+/etc/my.cnf /etc/mysql/my.cnf ~/.my.cnf
 ```
 
 - スローログの出力内容を`tail`で確認
 
 ```
-tail -f /var/log/mysql/slow.log
+tail -f /var/lib/mysql/slow.log
 ```
 
 - テーブル構成
@@ -104,19 +116,17 @@ tail -f /var/log/mysql/slow.log
 show create table users;
 
 CREATE TABLE `users` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
-  `mail` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `sex` int(11) NOT NULL,
   `birthday` datetime NOT NULL,
   `profile1` text,
   `profile2` text,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=1000008 DEFAULT CHARSET=utf8 |
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1000008 DEFAULT CHARSET=utf8mb3
 
 1 row in set (0.01 sec)
 ```
@@ -130,17 +140,52 @@ select count(*) from users;
 - 今回チューニングする SQL の実行
 
 ```
-select name from users where mail = "o3xE22lXIlWJCdd@example.com";
+mysql> select name from users where email = "o3xE22lXIlWJCdd@example.com";
+
++-----------------+
+| name            |
++-----------------+
+| o3xE22lXIlWJCdd |
++-----------------+
+1 row in set (16.25 sec)
 ```
 
 - スローログの出力内容を確認
 
   - 2 件出力されていること
 
+```
+# tail -f /var/lib/mysql/slow.log
+# User@Host: root[root] @  [172.17.0.1]  Id:     8
+# Query_time: 12.034466  Lock_time: 0.000113 Rows_sent: 1  Rows_examined: 0
+use part1;
+SET timestamp=1625534799;
+select count(*) from users;
+# Time: 2021-07-06T01:35:24.616980Z
+# User@Host: root[root] @  [172.17.0.1]  Id:     8
+# Query_time: 16.227654  Lock_time: 0.003036 Rows_sent: 1  Rows_examined: 1000006
+SET timestamp=1625535308;
+select name from users where email = "o3xE22lXIlWJCdd@example.com";
+```
+
 - explain の実行
 
 ```
-explain select name from users where mail = "o3xE22lXIlWJCdd@example.com"\G
+mysql> explain select name from users where email = "o3xE22lXIlWJCdd@example.com"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: 750105
+     filtered: 10.00
+        Extra: Using where
+1 row in set, 1 warning (0.01 sec)
 ```
 
 以降のチューニングはスローログ、Explain の章を学び再度実演にて解決します
@@ -194,7 +239,7 @@ SET timestamp=1625534799;
 select count(*) from users;
 ```
 
-- 出力例  
+- 実行 SQL
   ターミナル 2
 
 ```
