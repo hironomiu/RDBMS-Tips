@@ -255,15 +255,16 @@ mysql> select name from users where email = "o3xE22lXIlWJCdd@example.com";
 ```
 
 - 出力例
-  - ターミナル 1 の出力結果より`# Query_time: 26.215280 `、`Rows_sent: 1 Rows_examined: 1000006`から実行時間約 26 秒、返したレコード 1 件、読み込んだレコード 1000006 件
-    - `読み込んだレコード1000006件`を返したレコードに近づければ`# Query_time: 26.215280 `が縮小できると考える
+  - ターミナル 1 の出力結果より`# Query_time: 14.961383 `、`Rows_sent: 1 Rows_examined: 1000006`から実行時間約 15 秒、返したレコード 1 件、読み込んだレコード 1000006 件
+    - `読み込んだレコード1000006件`を返したレコード`Rows_sent: 1`に近づければ`# Query_time: 14.961383 `が縮小できると考える
 
 ```
-# Time: 2020-07-03T02:25:07.797968Z
-# User@Host: admin[admin] @ localhost []  Id:   260
-# Query_time: 26.215280  Lock_time: 0.000258 Rows_sent: 1  Rows_examined: 1000006
-SET timestamp=1593743081;
-select name from users where mail = "o3xE22lXIlWJCdd@example.com";
+# Time: 2021-07-06T01:56:32.193708Z
+# User@Host: root[root] @  [172.17.0.1]  Id:     8
+# Query_time: 14.961383  Lock_time: 0.000140 Rows_sent: 1  Rows_examined: 1000006
+use part1;
+SET timestamp=1625536577;
+select name from users where email = "o3xE22lXIlWJCdd@example.com";
 ```
 
 ## Explain
@@ -273,7 +274,7 @@ Explain は SQL 文の実行計画計画に関する情報を出力します。�
 - Explaine 出力例
 
 ```
-mysql> explain select name from users where mail = "o3xE22lXIlWJCdd@example.com"\G
+mysql> explain select name from users where email = "o3xE22lXIlWJCdd@example.com"\G
 *************************** 1. row ***************************
            id: 1
   select_type: SIMPLE
@@ -284,15 +285,15 @@ possible_keys: NULL
           key: NULL
       key_len: NULL
           ref: NULL
-         rows: 717622
+         rows: 750105
      filtered: 10.00
         Extra: Using where
-1 row in set, 1 warning (0.03 sec)
+1 row in set, 1 warning (0.01 sec)
 ```
 
-- この出力結果からは、users テーブルから`table: users`、候補となる INDEX`possible_keys: NULL`が存在せず、実際に適用された INDEX もなく`key: NULL`、717622 件のレコードを走査`rows: 717622`したことがわかります
-  - 注意 `rows: 717622`は統計値で実際には 1000006 レコード
-  - スローログの章同様に返すレコードに`rows: 717622`を近づけることを考える
+- この出力結果からは、users テーブルから`table: users`、候補となる INDEX`possible_keys: NULL`が存在せず、実際に適用された INDEX もなく`key: NULL`、717622 件のレコードを走査`rows: 750105`したことがわかります
+  - 注意 `rows: 750105`は統計値で実際には 1000006 レコード
+  - スローログで触れたように返すレコード 1 件に`rows: 750105`を近づけることを考える
 
 ## B+tree INDEX アーキテクチャ
 
@@ -326,7 +327,8 @@ B+treeINDEX の構造は簡単にあらわすと、このような図になり�
 この例で、100 万レコードから 1 件(もしくは n 件)のデータが導きだされるケースで Full Scan と INDEX 探索では`1Gbyte対40byte`のデータ容量の走査の差が性能差となって現れます。
 
 - SQL でどのカラムを INDEX として貼るべきか？
-  - 今回のスローログで見つかった SQL ならば`Where句`で指定されたカラムに設定するのが良い
+  - 今回のスローログで見つかった SQL ならば`Where句`で指定されたカラムに設定し性能改善したか確認
+  - カバリングインデックスと言う戦略も選択肢としてある(`select句`で指定されたカラムまで含める)
 
 ## SQL パフォーマンスチューニング実演
 
@@ -373,23 +375,24 @@ mysql> select count(*) from users;
 1 row in set (12.29 sec)
 ```
 
-- 問題の SQL を実行
-  - `1 row in set (14.01 sec)`に注目
+- パフォーマンスに問題がある SQL を実行し確認
+  - `1 row in set (16.08 sec)`に注目
 
 ```
-mysql> select name from users where mail = "o3xE22lXIlWJCdd@example.com";
+mysql> select name from users where email = "o3xE22lXIlWJCdd@example.com";
 +-----------------+
 | name            |
 +-----------------+
 | o3xE22lXIlWJCdd |
 +-----------------+
-1 row in set (14.01 sec)
-```
-
-- explain`rows`に注目しましょう(`rows: 716153`)
+1 row in set (16.08 sec)
 
 ```
-mysql> explain select name from users where mail = "o3xE22lXIlWJCdd@example.com"\G
+
+- explain`rows`に注目しましょう(`rows: 750105`)
+
+```
+mysql> explain select name from users where email = "o3xE22lXIlWJCdd@example.com"\G
 *************************** 1. row ***************************
            id: 1
   select_type: SIMPLE
@@ -400,19 +403,19 @@ possible_keys: NULL
           key: NULL
       key_len: NULL
           ref: NULL
-         rows: 716153
+         rows: 750105
      filtered: 10.00
         Extra: Using where
-1 row in set, 1 warning (0.03 sec)
+1 row in set, 1 warning (0.01 sec)
 ```
 
-- INDEX の作成
+- パフォーマンスに問題がある SQL の対策で INDEX の作成
   - 今回の話とはずれるが INDEX の作成時間は覚えておくことは大事
-    - `Query OK, 0 rows affected (31.76 sec)`
+    - `Query OK, 0 rows affected (23.89 sec)`
 
 ```
-mysql> alter table users add index mail(`mail`);
-Query OK, 0 rows affected (31.76 sec)
+mysql> alter table users add index email(`email`);
+Query OK, 0 rows affected (23.89 sec)
 Records: 0  Duplicates: 0  Warnings: 0
 ```
 
@@ -420,32 +423,33 @@ Records: 0  Duplicates: 0  Warnings: 0
   - Unique INDEX の場合は以下
 
 ```
-mysql> alter table users drop index mail;
-mysql> alter table users add unique index mail(`mail`);
+mysql> alter table users drop index email;
+mysql> alter table users add unique index email(`email`);
 Query OK, 0 rows affected (31.78 sec)
 Records: 0  Duplicates: 0  Warnings: 0
 ```
 
-- explain`rows`に注目しましょう(`rows: 1`)
+- explain`rows`に注目しましょう(`rows: 1`)、`possible_keys`に候補となるインデックス、`key`で実際に利用したインデックスが表示される(今回は`email`が利用された)
 
 ```
-mysql> explain select name from users where mail = "o3xE22lXIlWJCdd@example.com"\G
+mysql> explain select name from users where email = "o3xE22lXIlWJCdd@example.com"\G
 *************************** 1. row ***************************
            id: 1
   select_type: SIMPLE
         table: users
    partitions: NULL
          type: ref
-possible_keys: mail
-          key: mail
+possible_keys: email
+          key: email
       key_len: 302
           ref: const
          rows: 1
      filtered: 100.00
         Extra: NULL
-1 row in set, 1 warning (0.01 sec)
+1 row in set, 1 warning (0.00 sec)
 ```
 
+- 余談(`select句`のカラムを`name`->`email`にし SQL の動作の違いについて確認)
 - Extra の違いに注目
   - 古い Version だと`Using index,Using where`だったこともあり
     - カバリングインデックスなどと呼ばれる
@@ -453,15 +457,15 @@ possible_keys: mail
       - ケースバイケースで`mail,name`が良い場合もある
 
 ```
-mysql> explain select mail from users where mail = "o3xE22lXIlWJCdd@example.com"\G
+mysql> explain select email from users where email = "o3xE22lXIlWJCdd@example.com"\G
 *************************** 1. row ***************************
            id: 1
   select_type: SIMPLE
         table: users
    partitions: NULL
          type: ref
-possible_keys: mail
-          key: mail
+possible_keys: email
+          key: email
       key_len: 302
           ref: const
          rows: 1
@@ -474,7 +478,7 @@ possible_keys: mail
   - 1 row in set (0.00 sec)
 
 ```
-mysql> select name from users where mail = "o3xE22lXIlWJCdd@example.com";
+mysql> select name from users where email = "o3xE22lXIlWJCdd@example.com";
 +-----------------+
 | name            |
 +-----------------+
