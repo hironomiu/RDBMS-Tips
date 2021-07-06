@@ -134,7 +134,13 @@ CREATE TABLE `users` (
 - レコード数の確認
 
 ```
-select count(*) from users;
+mysql> select count(*) from users;
++----------+
+| count(*) |
++----------+
+|  1000006 |
++----------+
+1 row in set (12.05 sec)
 ```
 
 - 今回チューニングする SQL の実行
