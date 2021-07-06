@@ -6,7 +6,7 @@
 
 [MySQL:GitHub/Docker-DockerCompose-Training/recipe-x](https://github.com/hironomiu/Docker-DockerCompose-Training/tree/main/recipe-x)
 
-vim のインストール（任意）
+my.cnf を編集するため vim のインストール
 
 ```
 docker container exec -it mysqld bash
