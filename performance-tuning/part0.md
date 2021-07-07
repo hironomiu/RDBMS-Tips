@@ -12,6 +12,24 @@ my.cnf を編集するため vim のインストール
 docker container exec -it mysqld bash
 
 apt install -y vim
+
+exit
+```
+
+DB の作成
+
+パスワードについて適時変更（値、直接入力せずなど）すること
+
+```
+docker container exec -it mysqld bash
+
+mysql -u root -pmysql
+
+create database part1;
+
+exit;
+
+exit
 ```
 
 データの投入(linux)
