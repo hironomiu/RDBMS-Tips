@@ -2,9 +2,15 @@
 
 ## 準備
 
-[part1 で利用するテーブルデータ:GitHub/SQL-DATA](https://github.com/hironomiu/SQL-DATA)
+### データの準備
 
-[MySQL:GitHub/Docker-DockerCompose-Training/recipe-x](https://github.com/hironomiu/Docker-DockerCompose-Training/tree/main/recipe-x)
+[part1 で利用するテーブルデータ:GitHub/SQL-DATA](https://github.com/hironomiu/SQL-DATA)を clone する
+
+### Docker
+
+Dockerfile を作成し構築する場合はこちら[MySQL:GitHub/Docker-DockerCompose-Training/recipe-mysql](https://github.com/hironomiu/Docker-DockerCompose-Training/tree/main/recipe-mysql)
+
+コマンドで構築する場合はこちら[MySQL:GitHub/Docker-DockerCompose-Training/recipe-x](https://github.com/hironomiu/Docker-DockerCompose-Training/tree/main/recipe-x)
 
 my.cnf を編集するため vim のインストール
 
@@ -16,7 +22,7 @@ apt install -y vim
 exit
 ```
 
-DB の作成
+### DB の作成
 
 パスワードについて適時変更（値、直接入力せずなど）すること
 
@@ -32,7 +38,9 @@ exit;
 exit
 ```
 
-データの投入(linux)
+### データの投入
+
+linux
 
 パスワードについて適時変更（値、直接入力せずなど）すること
 
@@ -40,7 +48,7 @@ exit
 zcat users.dump.gz                  | mysql -u root -pmysql -h127.0.0.1 part1
 ```
 
-データの投入(max)
+mac
 
 パスワードについて適時変更（値、直接入力せずなど）すること
 
