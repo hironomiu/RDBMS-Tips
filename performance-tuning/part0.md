@@ -24,21 +24,31 @@ exit
 
 ### DB の作成
 
-パスワードについて適時変更（値、直接入力せずなど）すること
+bash モードで接続
 
 ```
 docker container exec -it mysqld bash
+```
 
-mysql -u root -pmysql
+パスワードについて適時変更（値、直接入力せずなど）すること
 
-create database part1;
+```
+mysql -u root -pmysql -e "create database part1;"
+```
 
-exit;
+bash モードから exit
 
+```
 exit
 ```
 
 ### データの投入
+
+※ 以下実行の際に MySQL Client が必要
+
+※ [part1 で利用するテーブルデータ:GitHub/SQL-DATA](https://github.com/hironomiu/SQL-DATA)を clone したディレクトリ直下に移動し以下を実行
+
+※ データの投入はマシンによって 30 分以上掛かるため注意
 
 linux
 
