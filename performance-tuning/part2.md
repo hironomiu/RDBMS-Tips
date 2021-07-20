@@ -51,7 +51,56 @@ Multi Column Index(複数カラムで構成する INDEX)のカラムの列挙順
 select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
 ```
 
+実際に検索
+
+```
+mysql> select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
+
+...
+
+1 row in set (18.53 sec)
+```
+
+explain で実行計画の確認
+
+```
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: 703878
+     filtered: 1.00
+        Extra: Using where
+1 row in set, 1 warning (0.02 sec)
+
+```
+
 データ分布
+
+```
+mysql> select birthday , count(*) from users group by birthday;
++---------------------+----------+
+| birthday            | count(*) |
++---------------------+----------+
+| 1993-11-26 00:00:00 |       37 |
+| 1968-08-14 00:00:00 |       43 |
+| 1986-08-26 00:00:00 |       53 |
+| 1957-06-07 00:00:00 |       43 |
+
+.....
+
+| 1944-09-30 00:00:00 |       24 |
+| 1952-05-07 00:00:00 |       38 |
++---------------------+----------+
+23726 rows in set (14.44 sec)
+
+```
 
 ```
 mysql> select count(*) from users where birthday = "1988-04-23 00:00:00";
@@ -61,7 +110,9 @@ mysql> select count(*) from users where birthday = "1988-04-23 00:00:00";
 |       51 |
 +----------+
 1 row in set (11.68 sec)
+```
 
+```
 mysql> select count(*) from users where name = "o3xE22lXIlWJCdd";
 +----------+
 | count(*) |
@@ -71,16 +122,54 @@ mysql> select count(*) from users where name = "o3xE22lXIlWJCdd";
 1 row in set (12.53 sec)
 ```
 
+INDEX は絞り込みが効くカラムから指定し（今回だと name からが良さそう）作成
+
+```
+alter table users add index name_birthday(name,birthday);
+```
+
+実行計画の確認
+
+```
+mysql> explain select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: name_birthday
+          key: name_birthday
+      key_len: 157
+          ref: const,const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+1 row in set, 1 warning (0.01 sec)
+```
+
+実際に検索
+
+```
+mysql> select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
+
+...
+
+1 row in set (0.00 sec)
+```
+
 例１
 
 ```
+
 mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
 +-----------------+
-| name            |
+| name |
 +-----------------+
 | POCqOOm8flPwKGm |
 +-----------------+
 1 row in set (11.60 sec)
+
 ```
 
 - カバリングインデックス
@@ -106,3 +195,7 @@ mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
 ## シャーディング
 
 ![sharding](./images/sharding.png)
+
+```
+
+```
