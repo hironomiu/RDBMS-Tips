@@ -158,7 +158,13 @@ mysql> select * from users where birthday = "1988-04-23 00:00:00" and name = "o3
 1 row in set (0.00 sec)
 ```
 
-例１
+### カバリングインデックス
+
+`Multi Column Index`の派生。INDEX で SELECT 句、条件句などをカバーしレコードまで探索をしないことでパフォーマンス向上を狙う
+
+例
+
+この場合だと name,email の 2 カラムだけで探索を完了できる
 
 ```
 
@@ -172,9 +178,95 @@ mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
 
 ```
 
-- カバリングインデックス
+カバリングインデックスではない対応
 
-- INDEX Sort
+```
+mysql> alter table users add index email(email);
+```
+
+explain と検索結果(時間に注目)
+
+```
+mysql> explain select name from users where email = "POCqOOm8flPwKGm@example.com"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: email
+          key: email
+      key_len: 302
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+1 row in set, 1 warning (0.01 sec)
+
+mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
++-----------------+
+| name            |
++-----------------+
+| POCqOOm8flPwKGm |
++-----------------+
+1 row in set (0.01 sec)
+```
+
+検証のため作った INDEX を削除
+
+```
+mysql> alter table users drop index email;
+```
+
+カバリングインデックス
+
+```
+mysql> alter table users add index email_name(email,name);
+```
+
+explain と検索結果(時間に注目)
+
+```
+mysql> explain select name from users where email = "POCqOOm8flPwKGm@example.com"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: email_name
+          key: email_name
+      key_len: 302
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: Using index
+1 row in set, 1 warning (0.00 sec)
+
+mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
++-----------------+
+| name            |
++-----------------+
+| POCqOOm8flPwKGm |
++-----------------+
+1 row in set (0.00 sec)
+```
+
+### INDEX Sort
+
+B+tree インデックスはソートされ格納されている特徴を利用したチューニング手法
+
+---
+
+```
+mysql> select count(*) from users where birthday >=  "1988-04-23 00:00:00" and birthday < "2000-01-01 00:00:00";
++----------+
+| count(*) |
++----------+
+|   177194 |
++----------+
+1 row in set (12.00 sec)
+```
 
 - union による複数 INDEX
 
