@@ -256,21 +256,177 @@ mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
 
 B+tree インデックスはソートされ格納されている特徴を利用したチューニング手法
 
----
+例　昇順(asc)
 
 ```
-mysql> select count(*) from users where birthday >=  "1988-04-23 00:00:00" and birthday < "2000-01-01 00:00:00";
-+----------+
-| count(*) |
-+----------+
-|   177194 |
-+----------+
-1 row in set (12.00 sec)
+mysql> select birthday,count(*) from users group by birthday order by birthday asc limit 10;
 ```
 
-- union による複数 INDEX
+explain と実行結果
 
-- ヒント句
+```
+mysql> explain select birthday,count(*) from users group by birthday order by birthday asc limit 10\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: 703878
+     filtered: 100.00
+        Extra: Using temporary; Using filesort
+1 row in set, 1 warning (0.01 sec)
+
+mysql> select birthday,count(*) from users group by birthday order by birthday asc limit 10;
++---------------------+----------+
+| birthday            | count(*) |
++---------------------+----------+
+| 1934-11-17 00:00:00 |       48 |
+| 1934-11-18 00:00:00 |       46 |
+| 1934-11-19 00:00:00 |       53 |
+| 1934-11-20 00:00:00 |       57 |
+| 1934-11-21 00:00:00 |       39 |
+| 1934-11-22 00:00:00 |       28 |
+| 1934-11-23 00:00:00 |       31 |
+| 1934-11-24 00:00:00 |       51 |
+| 1934-11-25 00:00:00 |       44 |
+| 1934-11-26 00:00:00 |       49 |
++---------------------+----------+
+10 rows in set (9.53 sec)
+```
+
+例　降順(desc)
+
+```
+mysql> select birthday,count(*) from users group by birthday order by birthday desc limit 10;
+```
+
+降順　 explain と実行結果
+
+```
+mysql> explain select birthday,count(*) from users group by birthday order by birthday desc limit 10\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: 703878
+     filtered: 100.00
+        Extra: Using temporary; Using filesort
+1 row in set, 1 warning (0.01 sec)
+
+mysql> select birthday,count(*) from users group by birthday order by birthday desc limit 10;
++---------------------+----------+
+| birthday            | count(*) |
++---------------------+----------+
+| 1999-11-01 00:00:00 |       40 |
+| 1999-10-31 00:00:00 |       47 |
+| 1999-10-30 00:00:00 |       39 |
+| 1999-10-29 00:00:00 |       44 |
+| 1999-10-28 00:00:00 |       51 |
+| 1999-10-27 00:00:00 |       32 |
+| 1999-10-26 00:00:00 |       28 |
+| 1999-10-25 00:00:00 |       38 |
+| 1999-10-24 00:00:00 |       35 |
+| 1999-10-23 00:00:00 |       37 |
++---------------------+----------+
+10 rows in set (9.19 sec)
+```
+
+index 作成
+
+```
+mysql> alter table users add index birthday(birthday);
+```
+
+昇順　 explain と実行結果
+
+```
+mysql> explain select birthday,count(*) from users group by birthday order by birthday asc limit 10\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: index
+possible_keys: birthday
+          key: birthday
+      key_len: 5
+          ref: NULL
+         rows: 10
+     filtered: 100.00
+        Extra: Using index
+1 row in set, 1 warning (0.00 sec)
+
+mysql> select birthday,count(*) from users group by birthday order by birthday asc limit 10;
++---------------------+----------+
+| birthday            | count(*) |
++---------------------+----------+
+| 1934-11-17 00:00:00 |       48 |
+| 1934-11-18 00:00:00 |       46 |
+| 1934-11-19 00:00:00 |       53 |
+| 1934-11-20 00:00:00 |       57 |
+| 1934-11-21 00:00:00 |       39 |
+| 1934-11-22 00:00:00 |       28 |
+| 1934-11-23 00:00:00 |       31 |
+| 1934-11-24 00:00:00 |       51 |
+| 1934-11-25 00:00:00 |       44 |
+| 1934-11-26 00:00:00 |       49 |
++---------------------+----------+
+10 rows in set (0.01 sec)
+```
+
+降順 explain(8.0 から`Backward index scan`が使える) と実行結果
+
+```
+mysql> explain select birthday,count(*) from users group by birthday order by birthday desc limit 10\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: index
+possible_keys: birthday
+          key: birthday
+      key_len: 5
+          ref: NULL
+         rows: 10
+     filtered: 100.00
+        Extra: Backward index scan; Using index
+1 row in set, 1 warning (0.01 sec)
+
+mysql> select birthday,count(*) from users group by birthday order by birthday desc limit 10;
++---------------------+----------+
+| birthday            | count(*) |
++---------------------+----------+
+| 1999-11-01 00:00:00 |       40 |
+| 1999-10-31 00:00:00 |       47 |
+| 1999-10-30 00:00:00 |       39 |
+| 1999-10-29 00:00:00 |       44 |
+| 1999-10-28 00:00:00 |       51 |
+| 1999-10-27 00:00:00 |       32 |
+| 1999-10-26 00:00:00 |       28 |
+| 1999-10-25 00:00:00 |       38 |
+| 1999-10-24 00:00:00 |       35 |
+| 1999-10-23 00:00:00 |       37 |
++---------------------+----------+
+10 rows in set (0.01 sec)
+```
+
+### ヒント句
+
+オプティマイザに対して SQL 文の動作をヒント句を用いてハンドリングができる
+
+### union による複数 INDEX
 
 ## Insert 時のボトルネック
 
