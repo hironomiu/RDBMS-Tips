@@ -424,9 +424,15 @@ mysql> select birthday,count(*) from users group by birthday order by birthday d
 
 ### ヒント句
 
-オプティマイザに対して SQL 文の動作をヒント句を用いてハンドリングができる
+オプティマイザに対して SQL 文のアクセス(パス|順序)やインデックスの指定などの振る舞いの誘導ができる
+
+USE INDEX
+
+STRAIGHT_JOIN
 
 ### union による複数 INDEX
+
+条件 A or 条件 B を A、B 各々に INDEX を貼り union で各々 INDEX SCAN を行う手法
 
 ## Insert 時のボトルネック
 
