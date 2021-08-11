@@ -645,11 +645,156 @@ mysql> select birthday,count(*) from users group by birthday order by birthday d
 
 USE INDEX
 
+```
+mysql> select * from users use index(birthday_name) where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
+
+...省略
+
+1 row in set (0.01 sec)
+```
+
+USE INDEX
+
+```
+mysql> select name from users use index(email_name)  where email = "POCqOOm8flPwKGm@example.com";+-----------------+
+| name            |
++-----------------+
+| POCqOOm8flPwKGm |
++-----------------+
+1 row in set (0.00 sec)
+```
+
 STRAIGHT_JOIN
+
+```
+mysql> select STRAIGHT_JOIN a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001;
++---------+---------------------------+
+| name    | message                   |
++---------+---------------------------+
+| sunrise | Sunriseへようこそ！       |
++---------+---------------------------+
+1 row in set (0.00 sec)
+
+mysql> explain select STRAIGHT_JOIN a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: b
+   partitions: NULL
+         type: ref
+possible_keys: user_id
+          key: user_id
+      key_len: 4
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+*************************** 2. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: a
+   partitions: NULL
+         type: const
+possible_keys: PRIMARY
+          key: PRIMARY
+      key_len: 4
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+2 rows in set, 1 warning (0.00 sec)
+```
 
 ### union による複数 INDEX
 
 条件 A or 条件 B を A、B 各々に INDEX を貼り union で各々 INDEX SCAN を行う手法
+
+```
+mysql> select * from users  where email = "POCqOOm8flPwKGm@example.com" or name = "sunrise";
+
+...省略
+
+2 rows in set (0.01 sec)
+```
+
+explain
+
+```
+mysql> explain select * from users  where email = "POCqOOm8flPwKGm@example.com" or name = "sunrise"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: index_merge
+possible_keys: email_name,name_birthday,email
+          key: email_name,name_birthday
+      key_len: 302,152
+          ref: NULL
+         rows: 2
+     filtered: 100.00
+        Extra: Using sort_union(email_name,name_birthday); Using where
+1 row in set, 1 warning (0.00 sec)
+```
+
+union で分割
+
+```
+mysql> select * from users  where email = "POCqOOm8flPwKGm@example.com" union select * from users  where  name = "sunrise";
+
+
+...省略
+
+2 rows in set (0.00 sec)
+```
+
+explain
+
+```
+mysql> explain select * from users  where email = "POCqOOm8flPwKGm@example.com" union select * from users  where  name = "sunrise"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: PRIMARY
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: email_name,email
+          key: email_name
+      key_len: 302
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+*************************** 2. row ***************************
+           id: 2
+  select_type: UNION
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: name_birthday
+          key: name_birthday
+      key_len: 152
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+*************************** 3. row ***************************
+           id: NULL
+  select_type: UNION RESULT
+        table: <union1,2>
+   partitions: NULL
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: NULL
+     filtered: NULL
+        Extra: Using temporary
+3 rows in set, 1 warning (0.01 sec)
+```
+
+---- part3
 
 ## Insert 時のボトルネック
 
