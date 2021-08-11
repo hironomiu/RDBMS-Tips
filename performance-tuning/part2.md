@@ -81,6 +81,9 @@ mysql> select count(*) from messages;
 
 Nested Loop Join について以下の SQL を例に解説
 
+- 上絵では FullScan に見えるが実際は Index などで駆動表のレコードを特定、内部表への探索も Index で特定することが望ましい
+- Nested Loop はクロス結合、内部結合、外部結合などの振る舞いがあるがまずは内部結合の動作の理解、内部結合で済むテーブル構造にすることが望ましい（上は内部結合の前提の絵）
+
 ```
 mysql> select a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001;
 +---------+---------------------------+
@@ -124,11 +127,64 @@ possible_keys: NULL
 2 rows in set, 1 warning (0.00 sec)
 ```
 
+チューニング
+
+```
+mysql> alter table messages add index user_id(user_id);
+Query OK, 0 rows affected (4.85 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+```
+
+explain
+
+```
+mysql> explain select a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: a
+   partitions: NULL
+         type: const
+possible_keys: PRIMARY
+          key: PRIMARY
+      key_len: 4
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+*************************** 2. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: b
+   partitions: NULL
+         type: ref
+possible_keys: user_id
+          key: user_id
+      key_len: 4
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+2 rows in set, 1 warning (0.00 sec)
+```
+
+取得時間(0.01 sec)
+
+```
+mysql> select a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001;
++---------+---------------------------+
+| name    | message                   |
++---------+---------------------------+
+| sunrise | Sunriseへようこそ！       |
++---------+---------------------------+
+1 row in set (0.01 sec)
+```
+
 ### Multi Column Index
 
 Multi Column Index(複数カラムで構成する INDEX)のカラムの列挙順について
 
-例１
+例１(select 句は全てのカラム、検索条件は`birthday`と`name`での絞り込み)
 
 ```
 select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
@@ -139,7 +195,7 @@ select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXI
 ```
 mysql> select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
 
-...
+... 割愛
 
 1 row in set (18.53 sec)
 ```
@@ -147,6 +203,8 @@ mysql> select * from users where birthday = "1988-04-23 00:00:00" and name = "o3
 explain で実行計画の確認
 
 ```
+mysql> explain select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd"\G
+
 *************************** 1. row ***************************
            id: 1
   select_type: SIMPLE
@@ -241,6 +299,52 @@ mysql> select * from users where birthday = "1988-04-23 00:00:00" and name = "o3
 1 row in set (0.00 sec)
 ```
 
+` birthday``name `で作成し確認
+
+```
+alter table users add index birthday_name(birthday,name);
+```
+
+実行計画の確認(`name_birthday`が選択される)
+
+```
+mysql> explain select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: name_birthday,birthday_name
+          key: name_birthday
+      key_len: 157
+          ref: const,const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+1 row in set, 1 warning (0.01 sec)
+```
+
+ヒント句で確認（use index)(※ヒント句は後で改めて触れる)
+
+```
+mysql> explain select * from users use index(birthday_name) where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: birthday_name
+          key: birthday_name
+      key_len: 157
+          ref: const,const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+1 row in set, 1 warning (0.00 sec)
+```
+
 ### カバリングインデックス
 
 `Multi Column Index`の派生。INDEX で SELECT 句、条件句などをカバーしレコードまで探索をしないことでパフォーマンス向上を狙う
@@ -295,22 +399,36 @@ mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
 1 row in set (0.01 sec)
 ```
 
-検証のため作った INDEX を削除
-
-```
-mysql> alter table users drop index email;
-```
-
 カバリングインデックス
 
 ```
 mysql> alter table users add index email_name(email,name);
 ```
 
-explain と検索結果(時間に注目)
+explain と(`Extra: NULL`に注目)
 
 ```
 mysql> explain select name from users where email = "POCqOOm8flPwKGm@example.com"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: email_name,email
+          key: email
+      key_len: 302
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+1 row in set, 1 warning (0.01 sec)
+```
+
+Index`email`が選択されるのでヒント句で確認(`Extra: Using index`に注目)
+
+```
+mysql> explain select name from users use index(email_name)  where email = "POCqOOm8flPwKGm@example.com"\G
 *************************** 1. row ***************************
            id: 1
   select_type: SIMPLE
@@ -325,8 +443,24 @@ possible_keys: email_name
      filtered: 100.00
         Extra: Using index
 1 row in set, 1 warning (0.00 sec)
+```
 
+検索結果(Index`email`)
+
+```
 mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
++-----------------+
+| name            |
++-----------------+
+| POCqOOm8flPwKGm |
++-----------------+
+1 row in set (0.00 sec)
+```
+
+検索結果(Index`email_name`)
+
+```
+mysql> select name from users use index(email_name)  where email = "POCqOOm8flPwKGm@example.com";
 +-----------------+
 | name            |
 +-----------------+
@@ -532,7 +666,3 @@ STRAIGHT_JOIN
 ## シャーディング
 
 ![sharding](./images/sharding.png)
-
-```
-
-```
