@@ -10,7 +10,7 @@
 
 ### テーブル定義
 
-`users`
+`users`(PK のみ)
 
 ```
 mysql> show create table users;
@@ -30,7 +30,7 @@ CREATE TABLE `users` (
 
 ```
 
-`messages`
+`messages`(PK のみ)
 
 ```
 mysql> show create table messages;
