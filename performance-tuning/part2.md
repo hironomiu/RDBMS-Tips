@@ -6,6 +6,12 @@
 
 ## 今回利用するテーブル
 
+親:users(id) - 子:messages(user_id)の関係(FK なし)
+
+### テーブル定義
+
+`users`
+
 ```
 mysql> show create table users;
 
@@ -24,7 +30,25 @@ CREATE TABLE `users` (
 
 ```
 
-件数
+`messages`
+
+```
+mysql> show create table messages;
+
+CREATE TABLE `messages` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `title` varchar(100) NOT NULL,
+  `message` text NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1754074 DEFAULT CHARSET=utf8mb3
+```
+
+### 件数
+
+`users`
 
 ```
 mysql> select count(*) from users;
@@ -37,9 +61,68 @@ mysql> select count(*) from users;
 
 ```
 
+`messages`
+
+```
+mysql> select count(*) from messages;
++----------+
+| count(*) |
++----------+
+|  1754073 |
++----------+
+1 row in set (0.87 sec)
+```
+
 ## SQL テクニック&Tips
 
 ### Nested Loop Join の理解
+
+![nested](./images/nested.png)
+
+Nested Loop Join について以下の SQL を例に解説
+
+```
+mysql> select a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001;
++---------+---------------------------+
+| name    | message                   |
++---------+---------------------------+
+| sunrise | Sunriseへようこそ！       |
++---------+---------------------------+
+1 row in set (8.92 sec)
+```
+
+explain
+
+```
+mysql> explain select a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: a
+   partitions: NULL
+         type: const
+possible_keys: PRIMARY
+          key: PRIMARY
+      key_len: 4
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+*************************** 2. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: b
+   partitions: NULL
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: 1676140
+     filtered: 10.00
+        Extra: Using where
+2 rows in set, 1 warning (0.00 sec)
+```
 
 ### Multi Column Index
 

@@ -56,6 +56,7 @@ linux
 
 ```
 zcat users.dump.gz                  | mysql -u root -pmysql -h127.0.0.1 part1
+zcat messages.dump.gz               | mysql -u root -pmysql -h127.0.0.1 part1
 ```
 
 mac
@@ -64,4 +65,5 @@ mac
 
 ```
 gzcat users.dump.gz                  | mysql -u root -pmysql -h127.0.0.1 part1
+gzcat messages.dump.gz               | mysql -u root -pmysql -h127.0.0.1 part1
 ```
