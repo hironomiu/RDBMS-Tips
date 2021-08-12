@@ -794,6 +794,56 @@ possible_keys: NULL
 3 rows in set, 1 warning (0.01 sec)
 ```
 
+```
+alter table users add index name(name);
+```
+
+explain
+
+```
+mysql> explain select * from users  where email = "POCqOOm8flPwKGm@example.com" union select * from users  where  name = "sunrise"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: PRIMARY
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: email,email_name
+          key: email
+      key_len: 302
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+*************************** 2. row ***************************
+           id: 2
+  select_type: UNION
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: name
+          key: name
+      key_len: 152
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+*************************** 3. row ***************************
+           id: NULL
+  select_type: UNION RESULT
+        table: <union1,2>
+   partitions: NULL
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: NULL
+     filtered: NULL
+        Extra: Using temporary
+3 rows in set, 1 warning (0.01 sec)
+```
+
 ---- part3
 
 ## Insert 時のボトルネック
