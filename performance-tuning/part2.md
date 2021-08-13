@@ -843,21 +843,3 @@ possible_keys: NULL
         Extra: Using temporary
 3 rows in set, 1 warning (0.01 sec)
 ```
-
----- part3
-
-## Insert 時のボトルネック
-
-- PK の衝突
-
-## レプリケーション
-
-![replication](./images/replication.png)
-
-## パーティショニング
-
-![parition](./images/partition.png)
-
-## シャーディング
-
-![sharding](./images/sharding.png)
