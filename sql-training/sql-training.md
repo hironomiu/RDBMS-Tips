@@ -34,7 +34,7 @@ SQL 文をパフォーマンス視点で最適な SQL 文を導き出せる
 
 MySQL が動作し、SQL が発行できる環境(ライブコーディングの視聴のみでも学べる構成にしてありますが実際に自分で SQL を書く方が学びが多いため推奨)
 
-[参考：Docker 用の MySQL 環境レシピ](https://github.com/hironomiu/Docker-DockerCompose-Training/tree/main/recipe-x)
+[参考：Docker 用の MySQL 環境レシピ](https://github.com/hironomiu/Docker-DockerCompose-Training/blob/main/recipe-mysql-dockerfile/README.md)
 
 ## 概要
 
