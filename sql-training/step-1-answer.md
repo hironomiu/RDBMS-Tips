@@ -1,6 +1,22 @@
 # SQL実力アップセミナー(Step1 回答)
 
 ## Answer
+### A0 テーブルの削除順序、作成順序
+親テーブルから作成し子テーブルから削除する必要があるため
+
+order_details は orders, itemsに依存している
+
+```
+FOREIGN KEY (order_id) REFERENCES orders(id),
+FOREIGN KEY (item_id) REFERENCES items(id)
+```
+
+orders は customers に依存している
+
+```
+FOREIGN KEY (customer_id) REFERENCES customers(id)
+```
+
 ### A0 テーブル確認をしましょう
 ```
 show tables;
