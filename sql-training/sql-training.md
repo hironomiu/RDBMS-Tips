@@ -42,7 +42,7 @@ MySQL が動作し、SQL が発行できる環境(ライブコーディングの
 
 ## テーブル定義
 
-概要に基づいて制約など盛り込んだテーブル定義が以下です。以下の CREATE TABLE 文を任意の MySQL DATABASE で実行し作成しましょう。
+概要に基づいて制約など盛り込んだテーブル定義が以下です。以下の CREATE TABLE 文を任意の MySQL DATABASE で実行し作成しましょう。([参考：Docker 用の MySQL 環境レシピ](https://github.com/hironomiu/Docker-DockerCompose-Training/blob/main/recipe-mysql-dockerfile/README.md)の場合なら`test`に作成)
 
 ```
 DROP TABLE IF EXISTS order_details;
