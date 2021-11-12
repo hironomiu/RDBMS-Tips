@@ -77,7 +77,7 @@ select avg(sum_price) from (select a.order_id,sum(b.price * a.item_quantity) sum
 ### A4 解答後補足問題
 受注の件数も一緒に取得しましょう
 ```
-select avg(sum_price),count(order_id) order_couunt from (select a.order_id,sum(b.price * a.item_quantity) sum_price from order_details a inner join items b on b.id = a.item_id group by order_id) c;
+select avg(sum_price),count(*) order_couunt from (select a.order_id,sum(b.price * a.item_quantity) sum_price from order_details a inner join items b on b.id = a.item_id group by order_id) c;
 ```
 
 ### A5 受注金額が一番大きい受注の受注idと受注金額を求めましょう
