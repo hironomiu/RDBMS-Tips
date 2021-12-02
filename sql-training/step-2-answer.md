@@ -231,6 +231,7 @@ from order_details a right outer join items b on a.item_id = b.id  group by b.id
 
 ### A13
 
+[MySQL GROUP_CONCAT](https://dev.mysql.com/doc/refman/8.0/ja/aggregate-functions.html#function_group-concat)
 ```
 select b.id , group_concat(a.order_id) order_id from order_details a right outer join items b on a.item_id = b.id  group by b.id;
 ```
