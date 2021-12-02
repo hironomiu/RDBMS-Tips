@@ -49,6 +49,15 @@ mysql> select * from items2;
 
 通常の insert 文の場合 1 レコード insert するたびに client から mysqld が作成したスレッドに要求がされるためレコード数分 insert 文が発行されるがこの insert では 1 回の insert 文で複数行の挿入が行える。
 
+### A6 解答後補足問題
+
+時刻カラムの設定をDB側(`now()` or `DEFAULT CURRENT_TIMESTAMP`)に任せるメリットを考えてみましょう
+
+アプリケーション側で時刻を設定した場合、複数のアプリケーションサーバで運営していた場合、サーバ間でのがズレが生じる可能性がある。
+
+`now()` or `DEFAULT CURRENT_TIMESTAMP`はSQL文（ステートメント）単位で発効される
+
+
 ### A7
 
 ```
