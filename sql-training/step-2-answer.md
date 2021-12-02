@@ -4,6 +4,7 @@
 
 ### A6
 
+[MySQL Bulk Data Loading](https://dev.mysql.com/doc/refman/8.0/en/optimizing-innodb-bulk-data-loading.html)
 ```
 insert into items values
  (null,"タンクトップ",1300,now(),now()),
@@ -206,7 +207,7 @@ mysql> select b.id ,(select name from items where id = b.id) from order_details 
 
 ### A10
 
-[MySQL CASEステートメント](https://dev.mysql.com/doc/refman/8.0/ja/case.html)
+[MySQL CASEステートメント](https://dev.mysql.com/doc/refman/8.0/en/case.html)
 
 ```
 select count(*) as "all_order",
@@ -240,7 +241,7 @@ from order_details a right outer join items b on a.item_id = b.id  group by b.id
 
 ### A13
 
-[MySQL GROUP_CONCAT](https://dev.mysql.com/doc/refman/8.0/ja/aggregate-functions.html#function_group-concat)
+[MySQL GROUP_CONCAT](https://dev.mysql.com/doc/refman/8.0/en/aggregate-functions.html#function_group-concat)
 ```
 select b.id , group_concat(a.order_id) order_id from order_details a right outer join items b on a.item_id = b.id  group by b.id;
 ```
