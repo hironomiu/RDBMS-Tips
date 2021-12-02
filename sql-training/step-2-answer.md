@@ -197,6 +197,8 @@ mysql> select b.id ,(select name from items where id = b.id) from order_details 
 
 ### A10
 
+[MySQL CASEステートメント](https://dev.mysql.com/doc/refman/8.0/ja/case.html)
+
 ```
 select count(*) as "all_order",
  sum(case when item_id = 1 then 1 else 0 end) as "1",
