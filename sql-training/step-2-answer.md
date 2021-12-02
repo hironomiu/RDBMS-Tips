@@ -216,6 +216,8 @@ select b.id , count(a.item_id) count
 from order_details a right outer join items b on a.item_id = b.id  group by b.id;
 ```
 
+`count(item_id) count`にしている理由を考えてみましょう
+
 ### A12
 
 ```
