@@ -61,6 +61,8 @@ mysql> select * from items2;
 
 ### A7
 
+[MySQL Join](https://dev.mysql.com/doc/refman/8.0/en/join.html)
+
 ```
 select sum(d.price * c.item_quantity) as sum_price from customers a
 inner join orders b on a.id = b.customer_id and name = "B商会"
@@ -80,6 +82,8 @@ inner join customers on customers.id = orders.customer_id  where customers.name 
 #### 駆動票 items
 
 exists
+
+[MySQL EXISTS](https://dev.mysql.com/doc/refman/8.0/en/exists-and-not-exists-subqueries.html)
 
 ```
 select a.id,a.name from items a where exists (select * from order_details b where a.id = b.item_id);
