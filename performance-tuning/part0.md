@@ -17,6 +17,7 @@ my.cnf を編集するため vim のインストール
 ```
 docker container exec -it mysqld bash
 
+apt update
 apt install -y vim
 
 exit
