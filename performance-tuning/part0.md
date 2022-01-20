@@ -8,9 +8,9 @@
 
 ### Docker
 
-Dockerfile を作成し構築する場合はこちら[MySQL:GitHub/Docker-DockerCompose-Training/recipe-mysql](https://github.com/hironomiu/Docker-DockerCompose-Training/tree/main/recipe-mysql)
+Dockerfile を作成し構築する場合はこちら[MySQL:GitHub/Docker-DockerCompose-Training/recipe-mysql-dockerfile](https://github.com/hironomiu/Docker-DockerCompose-Training/tree/main/recipe-mysql-dockerfile)
 
-コマンドで構築する場合はこちら[MySQL:GitHub/Docker-DockerCompose-Training/recipe-x](https://github.com/hironomiu/Docker-DockerCompose-Training/tree/main/recipe-x)
+コマンドで構築する場合はこちら[MySQL:Docker-DockerCompose-Training/recipe-mysql-no-dockerfile](https://github.com/hironomiu/Docker-DockerCompose-Training/tree/main/recipe-mysql-no-dockerfile)
 
 my.cnf を編集するため vim のインストール
 
