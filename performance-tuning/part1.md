@@ -501,8 +501,8 @@ mysql> select name from users where email = "o3xE22lXIlWJCdd@example.com";
 ```
 
 - I/O が 717622 から 1 に減少(実際には 1000006 から 1)
-  - ページの走査も全ページから INDEX(root,branch,leaf の 3~4 ページ) + レコードのページの 4~5 ページになった
-    - 4261412864byte=4Gbyte から 8kbyte \* 4~5=32k~40kbyte
+  - ページの走査も全ページから INDEX(root,branch,leaf の 3 ~ 4 ページ) + レコードのページの 4 ~ 5 ページになった
+    - 4261412864byte=4Gbyte から 8kbyte \* 4 ~ 5 = 32k ~ 40kbyte
 
 ```
 mysql> select count(*) from users;
