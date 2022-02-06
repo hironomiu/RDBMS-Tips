@@ -1,10 +1,19 @@
 # sql-training-basic
 
-## select
+## DDL
 
+### create database
 
-## insert
+### create table
 
-## update
+### drop table
 
-## delete
+## DML
+
+### select
+
+### insert
+
+### update
+
+### delete
