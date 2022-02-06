@@ -84,6 +84,8 @@ Nested Loop Joinはクロス結合、内部結合、外部結合などの振る�
 
 Nested Loop Join について以下の SQL を例に解説
 
+このSQLの実行時間は`8.92 sec`である
+
 ```
 mysql> select a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001;
 +---------+---------------------------+
@@ -131,7 +133,7 @@ possible_keys: NULL
 
 explainからusers(a)はPKでアクセスし、messages(b)はINDEXは存在せずFull Scanとなっていることがわかる
 
-チューニング(messages(b)にINDEXを作成)
+チューニング(messages(b)にINDEXを作成し上のexplainで`key`にINDEXが指定され、`rows`を取得するレコード数（今回は１レコード）に近づける)
 
 ```
 mysql> alter table messages add index user_id(user_id);
@@ -139,7 +141,7 @@ Query OK, 0 rows affected (4.85 sec)
 Records: 0  Duplicates: 0  Warnings: 0
 ```
 
-explain
+explain(`key: user_id`,`rows: 1`と意図した実行計画になっている)
 
 ```
 mysql> explain select a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001\G
@@ -172,7 +174,7 @@ possible_keys: user_id
 2 rows in set, 1 warning (0.00 sec)
 ```
 
-取得時間(0.01 sec)
+実行時間の確認(0.01 sec)パフォーマンスが改善していることがわかる
 
 ```
 mysql> select a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001;
