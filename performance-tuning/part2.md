@@ -84,6 +84,7 @@ Nested Loop Joinはクロス結合、内部結合、外部結合などの振る�
 
 Nested Loop Join について以下の SQL を例に解説
 
+#### 実行時間の確認
 このSQLの実行時間は`8.92 sec`である
 
 ```
