@@ -78,6 +78,7 @@ mysql> select count(*) from messages;
 ### Nested Loop Join の理解
 
 ![nested](./images/nested.png)
+
 上絵では FullScan に見えるが実際は Index などで駆動表のレコードを特定、内部表への探索も Index で特定することが望ましい  
 Nested Loop はクロス結合、内部結合、外部結合などの振る舞いがあるがまずは内部結合の動作の理解、内部結合で済むテーブル構造にすることが望ましい（上は内部結合の前提の絵）
 
