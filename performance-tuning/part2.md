@@ -94,7 +94,9 @@ mysql> select a.name ,b.message from messages b inner join users a on a.id = b.u
 1 row in set (8.92 sec)
 ```
 
-explain(users(a)から読み(駆動表)、messages(b)を読んでいることがわかる。※SQLの記述ではmessages(b)からusers(a)を読むように書かれているがオプティマイザのアクセスパスは異なっている)
+explain
+users(a)から読み(駆動表)、messages(b)を読んでいることがわかる。
+※SQLの記述ではmessages(b)からusers(a)を読むように書かれているがオプティマイザのアクセスパスは異なっている
 
 ```
 mysql> explain select a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001\G
