@@ -194,13 +194,18 @@ mysql> select a.name ,b.message from messages b inner join users a on a.id = b.u
 
 Multi Column Index(複数カラムで構成する INDEX)のカラムの列挙順について
 
-例１(select 句は全てのカラム、検索条件は`birthday`と`name`での絞り込み)
+#### 例１
+select 句は全てのカラム、検索条件は`birthday`と`name`での絞り込み
 
 ```
 select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
 ```
 
-実際に検索
+#### SQLと実行時間の確認
+
+SQLでは条件句(where)に`birthday`と`name`の絞り込みが行われている
+
+実行時間は`1 row in set (18.53 sec)`
 
 ```
 mysql> select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
@@ -210,7 +215,9 @@ mysql> select * from users where birthday = "1988-04-23 00:00:00" and name = "o3
 1 row in set (18.53 sec)
 ```
 
-explain で実行計画の確認
+#### 実行計画の確認(explain)
+
+`possible_keys: NULL`,`key: NULL`とINDEXの候補もなく使用されていない。1件のレコードを取得するのに`rows: 703878`(統計値)件読まれている。
 
 ```
 mysql> explain select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd"\G
@@ -232,7 +239,9 @@ possible_keys: NULL
 
 ```
 
-データ分布
+#### データ分布の確認
+
+条件句の`birthday`の分布を目視で確認。今回はバランス良くバラけているようである
 
 ```
 mysql> select birthday , count(*) from users group by birthday;
@@ -253,6 +262,8 @@ mysql> select birthday , count(*) from users group by birthday;
 
 ```
 
+条件句で指定した`birthday = "1988-04-23 00:00:00"`でレコード数の確認(51件)
+
 ```
 mysql> select count(*) from users where birthday = "1988-04-23 00:00:00";
 +----------+
@@ -262,6 +273,8 @@ mysql> select count(*) from users where birthday = "1988-04-23 00:00:00";
 +----------+
 1 row in set (11.68 sec)
 ```
+
+条件句で指定した`name = "o3xE22lXIlWJCdd"`でレコード数の確認(1件)
 
 ```
 mysql> select count(*) from users where name = "o3xE22lXIlWJCdd";
@@ -273,13 +286,15 @@ mysql> select count(*) from users where name = "o3xE22lXIlWJCdd";
 1 row in set (12.53 sec)
 ```
 
-INDEX は絞り込みが効くカラムから指定し（今回だと name からが良さそう）作成
+#### チューニング
+
+INDEX は絞り込みが効くカラムから指定し（今回だと name の絞り込みが効く可能性が高いため先に指定）作成
 
 ```
 alter table users add index name_birthday(name,birthday);
 ```
 
-実行計画の確認
+#### 実行計画の確認(explain)
 
 ```
 mysql> explain select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd"\G
@@ -299,7 +314,7 @@ possible_keys: name_birthday
 1 row in set, 1 warning (0.01 sec)
 ```
 
-実際に検索
+#### 実際に検索
 
 ```
 mysql> select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
@@ -315,7 +330,9 @@ mysql> select * from users where birthday = "1988-04-23 00:00:00" and name = "o3
 alter table users add index birthday_name(birthday,name);
 ```
 
-実行計画の確認(`name_birthday`が選択される)
+#### 実行計画の確認(explain)
+
+`name_birthday`が選択され`rows: 1`で意図した通りの実行計画になる
 
 ```
 mysql> explain select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd"\G
@@ -335,7 +352,9 @@ possible_keys: name_birthday,birthday_name
 1 row in set, 1 warning (0.01 sec)
 ```
 
-ヒント句で確認（use index)(※ヒント句は後で改めて触れる)
+#### ヒント句
+
+ヒント句を用いて選択されなかった`birthday_name`を指定し実行計画ので確認（use index)(※ヒント句については後で改めて触れる)
 
 ```
 mysql> explain select * from users use index(birthday_name) where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd"\G
