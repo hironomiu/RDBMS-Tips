@@ -95,7 +95,7 @@ mysql> select a.name ,b.message from messages b inner join users a on a.id = b.u
 ```
 
 explain  
-users(a)から読み(駆動表)、messages(b)を読んでいることがわかる。 
+users(a)から読み(駆動表)、messages(b)を読んでいることがわかる。  
 ※SQLの記述ではmessages(b)からusers(a)を読むように書かれているがオプティマイザのアクセスパスは異なっている
 
 ```
