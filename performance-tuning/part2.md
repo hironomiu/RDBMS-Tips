@@ -129,7 +129,9 @@ possible_keys: NULL
 2 rows in set, 1 warning (0.00 sec)
 ```
 
-チューニング
+explainからusers(a)はPKでアクセスし、messages(b)はINDEXは存在せずFull Scanとなっていることがわかる
+
+チューニング(messages(b)にINDEXを作成)
 
 ```
 mysql> alter table messages add index user_id(user_id);
