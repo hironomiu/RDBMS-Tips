@@ -79,10 +79,10 @@ mysql> select count(*) from messages;
 
 ![nested](./images/nested.png)
 
-Nested Loop Join について以下の SQL を例に解説
-
 - 上絵では FullScan に見えるが実際は Index などで駆動表のレコードを特定、内部表への探索も Index で特定することが望ましい
 - Nested Loop はクロス結合、内部結合、外部結合などの振る舞いがあるがまずは内部結合の動作の理解、内部結合で済むテーブル構造にすることが望ましい（上は内部結合の前提の絵）
+
+Nested Loop Join について以下の SQL を例に解説
 
 ```
 mysql> select a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001;
@@ -95,7 +95,7 @@ mysql> select a.name ,b.message from messages b inner join users a on a.id = b.u
 ```
 
 explain  
-users(a)から読み(駆動表)、messages(b)を読んでいることがわかる。  
+users(a)から読み(駆動表)、messages(b)を読んでいる(Nested Loop Join)ことがわかる。  
 ※SQLの記述ではmessages(b)からusers(a)を読むように書かれているがオプティマイザのアクセスパスは異なっている
 
 ```
