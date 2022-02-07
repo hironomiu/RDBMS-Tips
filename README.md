@@ -26,7 +26,7 @@ MySQL の rand()とユーザー定義変数を使ったサンプルコード
 
 MySQL で CSV(カンマ区切り)のカラムを行に変換する
 
-##　SQL-Tree-Structure
+## SQL-Tree-Structure
 
 [SQL-Tree-Structure(別リポジトリ)](https://github.com/hironomiu/SQL-Tree-Structure)
 
