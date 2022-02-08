@@ -548,13 +548,15 @@ possible_keys: email_name
 
 B+tree インデックスはソートされ格納されている特徴を利用したチューニング手法
 
-例　昇順(asc)
+#### 例(昇順(asc))
 
 ```
 mysql> select birthday,count(*) from users group by birthday order by birthday asc limit 10;
 ```
 
-explain と実行結果
+#### 実行計画(explain)
+
+`key: NULL`とFull Scanで統計値`rows: 703878`のレコードにアクセスしている
 
 ```
 mysql> explain select birthday,count(*) from users group by birthday order by birthday asc limit 10\G
@@ -572,7 +574,13 @@ possible_keys: NULL
      filtered: 100.00
         Extra: Using temporary; Using filesort
 1 row in set, 1 warning (0.01 sec)
+```
 
+####  実行結果
+
+`limit 10`でN件から10件のレコードを取得に`10 rows in set (9.53 sec)`掛かっている
+
+```
 mysql> select birthday,count(*) from users group by birthday order by birthday asc limit 10;
 +---------------------+----------+
 | birthday            | count(*) |
@@ -591,13 +599,16 @@ mysql> select birthday,count(*) from users group by birthday order by birthday a
 10 rows in set (9.53 sec)
 ```
 
-例　降順(desc)
+
+#### 例(降順(desc))
 
 ```
 mysql> select birthday,count(*) from users group by birthday order by birthday desc limit 10;
 ```
 
-降順　 explain と実行結果
+#### explain
+
+`key: NULL`とFull Scanで統計値`rows: 703878`のレコードにアクセスしている
 
 ```
 mysql> explain select birthday,count(*) from users group by birthday order by birthday desc limit 10\G
@@ -615,7 +626,13 @@ possible_keys: NULL
      filtered: 100.00
         Extra: Using temporary; Using filesort
 1 row in set, 1 warning (0.01 sec)
+```
 
+#### 実行結果
+
+`limit 10`でN件から10件のレコードを取得に`10 rows in set (9.19 sec)`掛かっている
+
+```
 mysql> select birthday,count(*) from users group by birthday order by birthday desc limit 10;
 +---------------------+----------+
 | birthday            | count(*) |
@@ -634,14 +651,17 @@ mysql> select birthday,count(*) from users group by birthday order by birthday d
 10 rows in set (9.19 sec)
 ```
 
-index 作成
+#### チューニング
+
+`birthday`にINDEXを作成する
 
 ```
 mysql> alter table users add index birthday(birthday);
 ```
 
-昇順　 explain と実行結果
+#### 昇順の実行計画(explain)
 
+`key: birthday` とINDEXを利用してテーブル走査している。`rows: 10`と必要最低限のアクセスに留めている。
 ```
 mysql> explain select birthday,count(*) from users group by birthday order by birthday asc limit 10\G
 *************************** 1. row ***************************
@@ -658,7 +678,13 @@ possible_keys: birthday
      filtered: 100.00
         Extra: Using index
 1 row in set, 1 warning (0.00 sec)
+```
 
+#### 実行結果
+
+`10 rows in set (0.01 sec)`でレコードを返している
+
+```
 mysql> select birthday,count(*) from users group by birthday order by birthday asc limit 10;
 +---------------------+----------+
 | birthday            | count(*) |
@@ -677,7 +703,11 @@ mysql> select birthday,count(*) from users group by birthday order by birthday a
 10 rows in set (0.01 sec)
 ```
 
-降順 explain(8.0 から`Backward index scan`が使える) と実行結果
+#### 降順の実行計画(explain)
+
+8.0 から`Backward index scan`が使える
+
+`key: birthday`とINDEXを利用してテーブル走査している。`rows: 10`と必要最低限のアクセスに留めている。
 
 ```
 mysql> explain select birthday,count(*) from users group by birthday order by birthday desc limit 10\G
@@ -695,7 +725,13 @@ possible_keys: birthday
      filtered: 100.00
         Extra: Backward index scan; Using index
 1 row in set, 1 warning (0.01 sec)
+```
 
+#### 実行結果
+
+`10 rows in set (0.01 sec)`でレコードを返している
+
+```
 mysql> select birthday,count(*) from users group by birthday order by birthday desc limit 10;
 +---------------------+----------+
 | birthday            | count(*) |
