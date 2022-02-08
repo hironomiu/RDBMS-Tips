@@ -194,7 +194,8 @@ mysql> select a.name ,b.message from messages b inner join users a on a.id = b.u
 
 Multi Column Index(複数カラムで構成する INDEX)のカラムの列挙順について
 
-#### 例１
+#### 例
+
 select 句は全てのカラム、検索条件は`birthday`と`name`での絞り込み
 
 ```
@@ -378,9 +379,9 @@ possible_keys: birthday_name
 
 `Multi Column Index`の派生。INDEX で SELECT 句、条件句などをカバーしレコードまで探索をしないことでパフォーマンス向上を狙う
 
-例
+#### 例
 
-この場合だと name,email の 2 カラムだけで探索を完了できる
+このケースだと name,email の 2 カラムでINDEXを作成することでINDEXだけで探索を完了できる
 
 ```
 
@@ -394,13 +395,67 @@ mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
 
 ```
 
-カバリングインデックスではない対応
+#### カバリングインデックスの作成
+
+```
+mysql> alter table users add index email_name(email,name);
+```
+
+#### 実行計画(explain)
+
+`Extra: Using index`に注目
+
+```
+mysql> explain select name from users where email = "POCqOOm8flPwKGm@example.com"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: email_name
+          key: email_name
+      key_len: 302
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: Using index
+1 row in set, 1 warning (0.01 sec)
+```
+
+#### 実行結果
+
+`1 row in set (0.01 sec)`に注目
+
+```
+mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
++-----------------+
+| name            |
++-----------------+
+| POCqOOm8flPwKGm |
++-----------------+
+1 row in set (0.01 sec)
+```
+
+
+
+#### 一旦インデックスの削除
+
+```
+mysql> alter table users drop index email_name;
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+```
+
+#### Where句のみにインデックスの作成
 
 ```
 mysql> alter table users add index email(email);
 ```
 
-explain と検索結果(時間に注目)
+#### 実行計画(explain)
+
+`Extra: NULL`に注目
 
 ```
 mysql> explain select name from users where email = "POCqOOm8flPwKGm@example.com"\G
@@ -417,8 +472,14 @@ possible_keys: email
          rows: 1
      filtered: 100.00
         Extra: NULL
-1 row in set, 1 warning (0.01 sec)
+1 row in set, 1 warning (0.00 sec)
+```
 
+#### 実行結果
+
+`1 row in set (0.01 sec)`に注目
+
+```
 mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
 +-----------------+
 | name            |
@@ -428,13 +489,17 @@ mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
 1 row in set (0.01 sec)
 ```
 
-カバリングインデックス
+#### カバリングインデックスの作成
+
+改めてカバリングインデックスを作成する
 
 ```
 mysql> alter table users add index email_name(email,name);
 ```
 
-explain と(`Extra: NULL`に注目)
+#### 実行計画(explain)
+
+`key: email`に注目(`email`が選択されている)
 
 ```
 mysql> explain select name from users where email = "POCqOOm8flPwKGm@example.com"\G
@@ -444,20 +509,21 @@ mysql> explain select name from users where email = "POCqOOm8flPwKGm@example.com
         table: users
    partitions: NULL
          type: ref
-possible_keys: email_name,email
+possible_keys: email,email_name
           key: email
       key_len: 302
           ref: const
          rows: 1
      filtered: 100.00
         Extra: NULL
-1 row in set, 1 warning (0.01 sec)
+1 row in set, 1 warning (0.00 sec)
 ```
 
-Index`email`が選択されるのでヒント句で確認(`Extra: Using index`に注目)
+#### 実行計画(explain)その２
+ヒント句を用い`email_name`を選択させる
 
 ```
-mysql> explain select name from users use index(email_name)  where email = "POCqOOm8flPwKGm@example.com"\G
+mysql> explain select name from users use index(email_name) where email = "POCqOOm8flPwKGm@example.com"\G
 *************************** 1. row ***************************
            id: 1
   select_type: SIMPLE
@@ -474,29 +540,9 @@ possible_keys: email_name
 1 row in set, 1 warning (0.00 sec)
 ```
 
-検索結果(Index`email`)
+#### どちらが良いか？
 
-```
-mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
-+-----------------+
-| name            |
-+-----------------+
-| POCqOOm8flPwKGm |
-+-----------------+
-1 row in set (0.00 sec)
-```
-
-検索結果(Index`email_name`)
-
-```
-mysql> select name from users use index(email_name)  where email = "POCqOOm8flPwKGm@example.com";
-+-----------------+
-| name            |
-+-----------------+
-| POCqOOm8flPwKGm |
-+-----------------+
-1 row in set (0.00 sec)
-```
+ケースバイケース。このケースでは`explain`だけでの評価ではなく、システムの稼働状況やメモリのキャッシュ状況なども加え総合的に評価することが望ましい
 
 ### INDEX Sort
 
