@@ -4,7 +4,7 @@
 
 ### データの準備
 
-[part1 で利用するテーブルデータ:GitHub/SQL-DATA](https://github.com/hironomiu/SQL-DATA)を clone する
+[part1,part2 で利用するテーブルデータ:GitHub/SQL-DATA](https://github.com/hironomiu/SQL-DATA)を clone する
 
 ### Docker
 
