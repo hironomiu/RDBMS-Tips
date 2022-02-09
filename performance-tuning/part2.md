@@ -857,6 +857,8 @@ mysql> select * from users use index(birthday_name) where birthday = "1988-04-23
 
 #### 実行計画
 
+`key: birthday_name`で選択されている
+
 ```
 mysql> explain select * from users use index(birthday_name) where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd"\G
 *************************** 1. row ***************************
@@ -891,6 +893,8 @@ mysql> select name from users use index(email_name)  where email = "POCqOOm8flPw
 
 #### 実行計画
 
+`key: email_name`で選択されている
+
 ```
 mysql> explain select name from users use index(email_name) where email = "POCqOOm8flPwKGm@example.com"\G
 *************************** 1. row ***************************
@@ -911,7 +915,7 @@ possible_keys: email_name
 
 #### 実行計画(ヒント句なし)
 
-`key: email`と`email`をオプティマイザは選択
+`possible_keys: email,email_name`の選択肢から`key: email`と`email`をオプティマイザは選択
 
 ```
 mysql> explain select name from users  where email = "POCqOOm8flPwKGm@example.com"\G
@@ -947,7 +951,7 @@ mysql> select STRAIGHT_JOIN a.name ,b.message from messages b inner join users a
 
 #### 実行計画(explain)
 
-`table: b`と`messages b`を駆動表として走査
+`1. row`で`table: b`と`messages b`を駆動表として走査
 
 ```
 mysql> explain select STRAIGHT_JOIN a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001\G
@@ -996,6 +1000,8 @@ mysql> select * from users  where email = "POCqOOm8flPwKGm@example.com" or name 
 
 #### 実行計画(explain)
 
+`key: email_name,name_birthday`が選択され`Extra: Using sort_union(email_name,name_birthday); Using where`の`Using sort_union(email_name,name_birthday)`からインデックスマージが行われている(※これ自体は問題のあるアクセスパスではない)
+
 ```
 mysql> explain select * from users  where email = "POCqOOm8flPwKGm@example.com" or name = "sunrise"\G
 *************************** 1. row ***************************
@@ -1027,7 +1033,7 @@ mysql> select * from users  where email = "POCqOOm8flPwKGm@example.com" union se
 
 #### 実行計画(explain)
 
-`1. row`で`key: email_name`で走査、`2. row`で`key: name_birthday`で走査、`3. row`で``1. row`&`2. row`をunion
+`1. row`で`key: email_name`で走査(`email`を選択することもある)、`2. row`で`key: name_birthday`で走査、`3. row`で``1. row`&`2. row`をunion
 
 ```
 mysql> explain select * from users  where email = "POCqOOm8flPwKGm@example.com" union select * from users  where  name = "sunrise"\G
@@ -1083,7 +1089,7 @@ alter table users add index name(name);
 
 #### 実行計画(explain)
 
-`possible_keys: name_birthday,name`からオプティマイザは`key: name_birthday`を選択(今回は意図した通りにならなかったため`use index`などで更に対策する)
+`possible_keys: name_birthday,name`からオプティマイザは`key: name_birthday`を選択(今回は意図した通りにならなかったためヒント句`use index`などで誘導することで意図したアクセスパスにできる)
 
 ```
 mysql> explain select * from users  where email = "POCqOOm8flPwKGm@example.com" union select * from users  where  name = "sunrise"\G
