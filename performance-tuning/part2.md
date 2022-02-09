@@ -754,7 +754,9 @@ mysql> select birthday,count(*) from users group by birthday order by birthday d
 
 オプティマイザに対して SQL 文のアクセス(パス|順序)やインデックスの指定などの振る舞いの誘導ができる
 
-USE INDEX
+#### USE INDEX その１
+
+`use index(birthday_name)`で`birthday_name`を指定しテーブル走査させる
 
 ```
 mysql> select * from users use index(birthday_name) where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
@@ -764,10 +766,33 @@ mysql> select * from users use index(birthday_name) where birthday = "1988-04-23
 1 row in set (0.01 sec)
 ```
 
-USE INDEX
+#### 実行計画
 
 ```
-mysql> select name from users use index(email_name)  where email = "POCqOOm8flPwKGm@example.com";+-----------------+
+mysql> explain select * from users use index(birthday_name) where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: birthday_name
+          key: birthday_name
+      key_len: 157
+          ref: const,const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+1 row in set, 1 warning (0.01 sec)
+```
+
+#### USE INDEX その２
+
+`use index(email_name)`で`email_name`を指定しテーブル走査させる
+
+```
+mysql> select name from users use index(email_name)  where email = "POCqOOm8flPwKGm@example.com";
++-----------------+
 | name            |
 +-----------------+
 | POCqOOm8flPwKGm |
@@ -775,7 +800,51 @@ mysql> select name from users use index(email_name)  where email = "POCqOOm8flPw
 1 row in set (0.00 sec)
 ```
 
-STRAIGHT_JOIN
+#### 実行計画
+
+```
+mysql> explain select name from users use index(email_name) where email = "POCqOOm8flPwKGm@example.com"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: email_name
+          key: email_name
+      key_len: 302
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: Using index
+1 row in set, 1 warning (0.00 sec)
+```
+
+#### 実行計画(ヒント句なし)
+
+`key: email`と`email`をオプティマイザは選択
+
+```
+mysql> explain select name from users  where email = "POCqOOm8flPwKGm@example.com"\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: ref
+possible_keys: email,email_name
+          key: email
+      key_len: 302
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+1 row in set, 1 warning (0.00 sec)
+```
+
+#### STRAIGHT_JOIN
+
+駆動表を指定できる
 
 ```
 mysql> select STRAIGHT_JOIN a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001;
@@ -785,7 +854,13 @@ mysql> select STRAIGHT_JOIN a.name ,b.message from messages b inner join users a
 | sunrise | Sunriseへようこそ！       |
 +---------+---------------------------+
 1 row in set (0.00 sec)
+```
 
+#### 実行計画(explain)
+
+`table: b`と`messages b`を駆動表として走査
+
+```
 mysql> explain select STRAIGHT_JOIN a.name ,b.message from messages b inner join users a on a.id = b.user_id and a.id = 1000001\G
 *************************** 1. row ***************************
            id: 1
@@ -820,6 +895,8 @@ possible_keys: PRIMARY
 
 条件 A or 条件 B を A、B 各々に INDEX を貼り union で各々 INDEX SCAN を行う手法
 
+#### 例
+
 ```
 mysql> select * from users  where email = "POCqOOm8flPwKGm@example.com" or name = "sunrise";
 
@@ -828,7 +905,7 @@ mysql> select * from users  where email = "POCqOOm8flPwKGm@example.com" or name 
 2 rows in set (0.01 sec)
 ```
 
-explain
+#### 実行計画(explain)
 
 ```
 mysql> explain select * from users  where email = "POCqOOm8flPwKGm@example.com" or name = "sunrise"\G
@@ -848,7 +925,7 @@ possible_keys: email_name,name_birthday,email
 1 row in set, 1 warning (0.00 sec)
 ```
 
-union で分割
+#### union で分割
 
 ```
 mysql> select * from users  where email = "POCqOOm8flPwKGm@example.com" union select * from users  where  name = "sunrise";
@@ -859,7 +936,9 @@ mysql> select * from users  where email = "POCqOOm8flPwKGm@example.com" union se
 2 rows in set (0.00 sec)
 ```
 
-explain
+#### 実行計画(explain)
+
+`1. row`で`key: email_name`で走査、`2. row`で`key: name_birthday`で走査、`3. row`で``1. row`&`2. row`をunion
 
 ```
 mysql> explain select * from users  where email = "POCqOOm8flPwKGm@example.com" union select * from users  where  name = "sunrise"\G
@@ -905,11 +984,17 @@ possible_keys: NULL
 3 rows in set, 1 warning (0.01 sec)
 ```
 
+#### チューニング
+
+`2. row`で`key: name_birthday`でもパフォーマンスは出ているがより最適なINDEXとして`name`のみでINDEXを作成
+
 ```
 alter table users add index name(name);
 ```
 
-explain
+#### 実行計画(explain)
+
+`possible_keys: name_birthday,name`からオプティマイザは`key: name_birthday`を選択(今回は意図した通りにならなかったため`use index`などで更に対策する)
 
 ```
 mysql> explain select * from users  where email = "POCqOOm8flPwKGm@example.com" union select * from users  where  name = "sunrise"\G
@@ -932,8 +1017,8 @@ possible_keys: email,email_name
         table: users
    partitions: NULL
          type: ref
-possible_keys: name
-          key: name
+possible_keys: name_birthday,name
+          key: name_birthday
       key_len: 152
           ref: const
          rows: 1
