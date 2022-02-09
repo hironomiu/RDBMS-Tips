@@ -292,7 +292,7 @@ mysql> select count(*) from users where name = "o3xE22lXIlWJCdd";
 
 #### チューニング
 
-INDEX は絞り込みが効くカラムから指定し（今回だと name の絞り込みが効く可能性が高いため先に指定）作成
+INDEX は絞り込みが効くカラムから指定し`name,birthday`で（今回だと name の絞り込みが効く可能性が高いため先に指定）作成
 
 ```
 alter table users add index name_birthday(name,birthday);
@@ -325,12 +325,14 @@ possible_keys: name_birthday
 ```
 mysql> select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
 
-...
+省略...
 
 1 row in set (0.00 sec)
 ```
 
-` birthday``name `で作成し確認
+#### 別のINDEXの作成
+
+`name,birthday`の逆で`birthday,name `で作成し確認
 
 ```
 alter table users add index birthday_name(birthday,name);
@@ -380,13 +382,26 @@ possible_keys: birthday_name
 1 row in set, 1 warning (0.00 sec)
 ```
 
+#### 実行結果
+
+`birthday_name`でもパフォーマンスは良好である
+
+```
+mysql> select * from users use index(birthday_name) where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
+
+省略...
+
+1 row in set (0.00 sec)
+```
+
 ### カバリングインデックス
 
 `Multi Column Index`の派生。INDEX で SELECT 句、条件句などをカバーしレコードまで探索をしないことでパフォーマンス向上を狙う
 
 #### 例
 
-このケースだと name,email の 2 カラムでINDEXを作成することでINDEXだけで探索を完了できる
+条件句(`where`)に`email`が指定され、結果セット(`select`句)に`name`が返されている。
+実行時間は`1 row in set (11.60 sec)`掛かっている。
 
 ```
 
@@ -400,7 +415,9 @@ mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
 
 ```
 
-#### カバリングインデックスの作成
+#### チューニング(カバリングインデックスの作成)
+
+今回のケースでは `name`,`email` の 2 カラムでINDEXを作成することでINDEXだけで探索を完了できる。この手法をカバリングインデックスと言う
 
 ```
 mysql> alter table users add index email_name(email,name);
@@ -446,13 +463,17 @@ mysql> select name from users where email = "POCqOOm8flPwKGm@example.com";
 
 #### 一旦インデックスの削除
 
+別のINDEXを評価するため`email_name`の削除
+
 ```
 mysql> alter table users drop index email_name;
 Query OK, 0 rows affected (0.03 sec)
 Records: 0  Duplicates: 0  Warnings: 0
 ```
 
-#### Where句のみにインデックスの作成
+#### インデックスの作成
+
+条件句(`where`)で指定されている`email`のみでINDEXの作成
 
 ```
 mysql> alter table users add index email(email);
@@ -525,6 +546,7 @@ possible_keys: email,email_name
 ```
 
 #### 実行計画(explain)その２
+
 ヒント句を用い`email_name`を選択させる
 
 ```
@@ -551,7 +573,16 @@ possible_keys: email_name
 
 ### INDEX Sort
 
-B+tree インデックスはソートされ格納されている特徴を利用したチューニング手法
+B+tree インデックスはソートされ格納される仕様を利用したチューニング手法
+
+#### INDEXの削除
+
+前のチューニングで作成した`name_birthday`,`birthday_name`を一旦削除
+
+```
+alter table users drop index name_birthday;
+alter table users drop index birthday_name;
+```
 
 #### 例(昇順(asc))
 
@@ -562,6 +593,7 @@ mysql> select birthday,count(*) from users group by birthday order by birthday a
 #### 実行計画(explain)
 
 `key: NULL`とFull Scanで統計値`rows: 703878`のレコードにアクセスしている
+
 
 ```
 mysql> explain select birthday,count(*) from users group by birthday order by birthday asc limit 10\G
@@ -603,7 +635,6 @@ mysql> select birthday,count(*) from users group by birthday order by birthday a
 +---------------------+----------+
 10 rows in set (9.53 sec)
 ```
-
 
 #### 例(降順(desc))
 
@@ -667,6 +698,7 @@ mysql> alter table users add index birthday(birthday);
 #### 昇順の実行計画(explain)
 
 `key: birthday` とINDEXを利用してテーブル走査している。`rows: 10`と必要最低限のアクセスに留めている。
+
 ```
 mysql> explain select birthday,count(*) from users group by birthday order by birthday asc limit 10\G
 *************************** 1. row ***************************
@@ -753,6 +785,58 @@ mysql> select birthday,count(*) from users group by birthday order by birthday d
 | 1999-10-23 00:00:00 |       37 |
 +---------------------+----------+
 10 rows in set (0.01 sec)
+```
+
+#### INDEXの作成
+
+一旦削除したINDEXを再作成
+```
+alter table users add index name_birthday(name,birthday);
+alter table users add index birthday_name(birthday,name);
+```
+
+#### 昇順の実行計画(explain)
+
+念のため確認
+
+```
+mysql> explain select birthday,count(*) from users group by birthday order by birthday asc limit 10\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: index
+possible_keys: birthday,name_birthday,birthday_name
+          key: birthday
+      key_len: 5
+          ref: NULL
+         rows: 10
+     filtered: 100.00
+        Extra: Using index
+1 row in set, 1 warning (0.00 sec)
+```
+
+#### 降順の実行計画(explain)
+
+念のため確認
+
+```
+mysql> explain select birthday,count(*) from users group by birthday order by birthday desc limit 10\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: users
+   partitions: NULL
+         type: index
+possible_keys: birthday,name_birthday,birthday_name
+          key: birthday
+      key_len: 5
+          ref: NULL
+         rows: 10
+     filtered: 100.00
+        Extra: Backward index scan; Using index
+1 row in set, 1 warning (0.00 sec)
 ```
 
 ### ヒント句
