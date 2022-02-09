@@ -138,7 +138,7 @@ possible_keys: NULL
 ```
 
 #### SQLチューニング
-今回は上のexplainで`key`にINDEXが指定され、`rows`を取得するレコード数（今回は１レコード）に近づけるようmessages(b)にINDEXを作成する。
+今回は上のexplainで`key`にINDEXが指定され、`rows`を取得するレコード数（今回は１レコード）に近づけるよう`messages b`にINDEXを作成する。
 
 ```
 mysql> alter table messages add index user_id(user_id);
@@ -205,7 +205,7 @@ select 句は全てのカラム、検索条件は`birthday`と`name`での絞り
 select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
 ```
 
-#### SQLと実行時間の確認
+#### 実行時間の確認
 
 SQLでは条件句(where)に`birthday`と`name`の絞り込みが行われている
 
@@ -318,7 +318,9 @@ possible_keys: name_birthday
 1 row in set, 1 warning (0.01 sec)
 ```
 
-#### 実際に検索
+#### 実行時間の確認
+
+`1 row in set (0.00 sec)`とチューニングが成功している
 
 ```
 mysql> select * from users where birthday = "1988-04-23 00:00:00" and name = "o3xE22lXIlWJCdd";
