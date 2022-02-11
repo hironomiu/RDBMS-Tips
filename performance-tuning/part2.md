@@ -394,6 +394,10 @@ mysql> select * from users use index(birthday_name) where birthday = "1988-04-23
 1 row in set (0.00 sec)
 ```
 
+#### 参考：Multi Column Indexでのデータの並び
+
+![multi-column](./images/multi-column.png)
+
 ### カバリングインデックス
 
 `Multi Column Index`の派生。INDEX で SELECT 句、条件句などをカバーしレコードまで探索をしないことでパフォーマンス向上を狙う
